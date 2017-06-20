@@ -1,0 +1,9 @@
+# Linux kernel build output
+**/*.o
+**/*.symvers
+**/*.order
+**/*.cmd
+**/.tmp_versions/
+**/*.mod.c
+# Linux module
+**/*.ko
