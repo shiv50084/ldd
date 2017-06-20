@@ -1,9 +1,12 @@
+#include "simple.h"
+
 #include <linux/cdev.h>
 #include <linux/fs.h>
 #include <linux/init.h>
 #include <linux/kdev_t.h>
 #include <linux/module.h>
 #include <linux/printk.h>
+#include <linux/slab.h>
 #include <linux/types.h>
 #include <linux/uaccess.h>
 
@@ -17,17 +20,19 @@ static int simple_num_dev = 1;
 static char *greet_msg = "Hello";
 module_param(greet_msg, charp, S_IRUGO);
 
-static struct cdev *my_cdev = NULL;
+static struct simple_dev *s_dev = NULL;
 
 int simple_open(struct inode *, struct file *);
 int simple_release(struct inode *, struct file *);
 ssize_t simple_read(struct file *, char __user *, size_t, loff_t *);
+static int __init simple_init(void);
+static void simple_exit(void);
 
 static struct file_operations simple_ops = {
 	.owner = THIS_MODULE,
 	.open = simple_open,
 	.release = simple_release,
-    .read = simple_read
+	.read = simple_read
 };
 
 int simple_open(struct inode *inode, struct file *filp)
@@ -75,31 +80,42 @@ static int __init simple_init(void)
 
 	if (res < 0) {
 		pr_warn("simple: can not get major number %d\n", simple_major_no);
-
-		return res;
+		goto fail;
 	}
 
-	my_cdev = cdev_alloc();
+	s_dev = kmalloc(sizeof(struct simple_dev), GFP_KERNEL);
 
-	if (my_cdev == NULL) {
-		return -EPERM;
-	}	
+	if (s_dev == NULL) {
+		res = -EPERM;
+		goto fail;
+	}
 
-	my_cdev->owner = THIS_MODULE;
-	my_cdev->ops = &simple_ops;
-	res = cdev_add(my_cdev, dev_no, 1);
+	cdev_init(&s_dev->cdev, &simple_ops);
+	res = cdev_add(&s_dev->cdev, dev_no, 1);
+
+	if (res < 0) {
+		pr_warn("simple: can not add cdev structure\n");
+		goto fail;
+	}
+
 	simple_major_no = MAJOR(dev_no);
 	pr_debug("simple: allocate major number %d\n", simple_major_no);
 
 	return 0;
+
+fail:
+	simple_exit();
+
+	return res;
 }
 
-static void __exit simple_exit(void)
+static void simple_exit(void)
 {
 	dev_t dev_no = MKDEV(simple_major_no, simple_minor_no);
 	
+	cdev_del(&s_dev->cdev);
+	kfree(s_dev);
 	unregister_chrdev_region(dev_no, simple_num_dev);
-
 	pr_debug("simple: Bye\n");
 }
 
