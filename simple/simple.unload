@@ -1,0 +1,13 @@
+#!/bin/bash
+
+MODULE=simple
+
+if [[ -z `lsmod | grep -e "^$MODULE\b"` ]]
+then
+    echo "module: '$MODULE' is not loaded"
+    exit 1
+fi
+
+rmmod $MODULE
+
+rm -f /dev/${MODULE}0

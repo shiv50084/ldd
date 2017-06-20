@@ -1,0 +1,9 @@
+#!/bin/bash
+
+MODULE=simple
+
+insmod simple.ko || exit 1
+
+MAJOR_NUM=`awk -v m=$MODULE '$2 == m { print $1; }' /proc/devices`
+
+mknod /dev/${MODULE}0 c $MAJOR_NUM 0 
