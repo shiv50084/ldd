@@ -7,6 +7,7 @@ ccflags-y := -std=gnu11 -DDEBUG
 
 else
 
+PWD := $(shell pwd)
 KDIR ?= /lib/modules/`uname -r`/build
 
 all:
