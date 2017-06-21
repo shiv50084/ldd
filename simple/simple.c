@@ -7,6 +7,7 @@
 #include <linux/module.h>
 #include <linux/printk.h>
 #include <linux/slab.h>
+#include <linux/string.h>
 #include <linux/types.h>
 #include <linux/uaccess.h>
 
@@ -25,6 +26,8 @@ static struct simple_dev *s_dev = NULL;
 int simple_open(struct inode *, struct file *);
 int simple_release(struct inode *, struct file *);
 ssize_t simple_read(struct file *, char __user *, size_t, loff_t *);
+ssize_t simple_write(struct file *, const char __user *, size_t, loff_t *);
+void simple_buf_clean(struct simple_dev *dev);
 static int __init simple_init(void);
 static void simple_exit(void);
 
@@ -32,12 +35,21 @@ static struct file_operations simple_ops = {
 	.owner = THIS_MODULE,
 	.open = simple_open,
 	.release = simple_release,
-	.read = simple_read
+	.read = simple_read,
+	.write = simple_write
 };
 
 int simple_open(struct inode *inode, struct file *filp)
-{	
+{
+	struct simple_dev *dev = container_of(inode->i_cdev, struct simple_dev, cdev);
+
+	filp->private_data = dev;
 	pr_debug("simple: open simple file\n");
+
+	if (filp->f_mode & FMODE_WRITE) {
+		simple_buf_clean(dev);
+	}
+
 	return 0;
 }
 
@@ -48,26 +60,69 @@ int simple_release(struct inode *inode, struct file *filp)
 
 ssize_t simple_read(struct file *filp, char __user *buf, size_t count, loff_t *off)
 {
-    static char module_buf[] = "simple-read";
-    int retval = 0;
+	int retval = 0;
+	struct simple_dev *dev = filp->private_data;
 
-    if (filp->f_pos + count > sizeof(module_buf)) {
-        count = sizeof(module_buf);
-    }
-    
-    pr_debug("simple: read count %zu\n", count);
+	if (*off >= count) {
+		goto out;
+	}
 
-    if (copy_to_user(buf, module_buf, count)) {
-        retval = -EFAULT;
-        goto out;
-    }
+	if (*off + count > dev->size) {
+		count = dev->size - *off;
+	}
 
-    retval = count;
+	pr_debug("simple: read count %zu\n", count);
+
+	if (copy_to_user(buf, &dev->buffer[*off], count) != 0) {
+		retval = -EFAULT;
+		goto out;
+	}
+
+	*off += count;
+	retval = count;
 
 out:
-    pr_debug("simple: read retval %d\n", retval);
+	pr_debug("simple: read retval %d\n", retval);
 
-    return retval;
+	return retval;
+}
+
+ssize_t simple_write(struct file *filp, const char __user *buf, size_t count, loff_t *off)
+{
+	int retval = -ENOMEM;
+	struct simple_dev *dev = filp->private_data;
+
+	if (*off >= SIMPLE_BUFFER_SIZE) {
+		goto out;
+	}
+
+	if (*off + count > SIMPLE_BUFFER_SIZE) {
+		count = SIMPLE_BUFFER_SIZE - *off;
+	}
+
+	pr_debug("simple: write count: %zu\n", count);
+
+	if (copy_from_user(&dev->buffer[*off], buf, count) != 0) {
+		retval = -EFAULT;
+		goto out;
+	}
+
+	*off += count;
+	retval = count;
+
+	if (dev->size < *off) {
+		dev->size = *off;
+	}
+out:
+	pr_debug("simple: write retval %d\n", retval);
+
+	return retval;
+}
+
+void simple_buf_clean(struct simple_dev *dev)
+{
+	memset(dev->buffer, 0, SIMPLE_BUFFER_SIZE);
+	dev->size = 0;
 }
 
 static int __init simple_init(void)
