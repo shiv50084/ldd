@@ -23,23 +23,24 @@ module_param(greet_msg, charp, S_IRUGO);
 
 static struct simple_dev *s_dev = NULL;
 
-int simple_open(struct inode *, struct file *);
-int simple_release(struct inode *, struct file *);
-ssize_t simple_read(struct file *, char __user *, size_t, loff_t *);
-ssize_t simple_write(struct file *, const char __user *, size_t, loff_t *);
-void simple_buf_clean(struct simple_dev *dev);
+static int simple_mod_open(struct inode *, struct file *);
+static int simple_mod_release(struct inode *, struct file *);
+static ssize_t simple_mod_read(struct file *, char __user *, size_t, loff_t *);
+static ssize_t simple_mod_write(struct file *, const char __user *, size_t, loff_t *);
+static void simple_mod_cleanup(void);
+static void simple_buf_clean(struct simple_dev *dev);
 static int __init simple_init(void);
 static void simple_exit(void);
 
 static struct file_operations simple_ops = {
 	.owner = THIS_MODULE,
-	.open = simple_open,
-	.release = simple_release,
-	.read = simple_read,
-	.write = simple_write
+	.open = simple_mod_open,
+	.release = simple_mod_release,
+	.read = simple_mod_read,
+	.write = simple_mod_write
 };
 
-int simple_open(struct inode *inode, struct file *filp)
+static int simple_mod_open(struct inode *inode, struct file *filp)
 {
 	struct simple_dev *dev = container_of(inode->i_cdev, struct simple_dev, cdev);
 
@@ -53,12 +54,13 @@ int simple_open(struct inode *inode, struct file *filp)
 	return 0;
 }
 
-int simple_release(struct inode *inode, struct file *filp)
+static int simple_mod_release(struct inode *inode, struct file *filp)
 {
 	return 0;
 }
 
-ssize_t simple_read(struct file *filp, char __user *buf, size_t count, loff_t *off)
+static ssize_t simple_mod_read(struct file *filp, char __user *buf, 
+		size_t count, loff_t *off)
 {
 	int retval = 0;
 	struct simple_dev *dev = filp->private_data;
@@ -87,7 +89,8 @@ out:
 	return retval;
 }
 
-ssize_t simple_write(struct file *filp, const char __user *buf, size_t count, loff_t *off)
+static ssize_t simple_mod_write(struct file *filp, const char __user *buf, 
+		size_t count, loff_t *off)
 {
 	int retval = -ENOMEM;
 	struct simple_dev *dev = filp->private_data;
@@ -119,10 +122,20 @@ out:
 	return retval;
 }
 
-void simple_buf_clean(struct simple_dev *dev)
+static void simple_buf_clean(struct simple_dev *dev)
 {
 	memset(dev->buffer, 0, SIMPLE_BUFFER_SIZE);
 	dev->size = 0;
+}
+
+static void simple_mod_cleanup(void)
+{
+	dev_t dev_no = MKDEV(simple_major_no, simple_minor_no);	
+
+	cdev_del(&s_dev->cdev);
+	kfree(s_dev);
+	unregister_chrdev_region(dev_no, simple_num_dev);
+
 }
 
 static int __init simple_init(void)
@@ -159,18 +172,14 @@ static int __init simple_init(void)
 	return 0;
 
 fail:
-	simple_exit();
+	simple_mod_cleanup();
 
 	return res;
 }
 
-static void simple_exit(void)
+static void __exit simple_exit(void)
 {
-	dev_t dev_no = MKDEV(simple_major_no, simple_minor_no);
-	
-	cdev_del(&s_dev->cdev);
-	kfree(s_dev);
-	unregister_chrdev_region(dev_no, simple_num_dev);
+	simple_mod_cleanup();
 	pr_debug("simple: Bye\n");
 }
 
