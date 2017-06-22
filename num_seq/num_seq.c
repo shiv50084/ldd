@@ -35,11 +35,11 @@ static const struct seq_operations num_seq_iter = {
 	.show = num_seq_op_show 
 };
 
-static struct num_seq_dev *num_dev;
+static struct num_seq_dev num_dev;
 
 static void num_seq_create_proc(void)
 {
-	num_dev->pdir = proc_create("num_seq", 0, NULL, &num_seq_proc_ops);
+	num_dev.pdir = proc_create("num_seq", 0, NULL, &num_seq_proc_ops);
 }
 
 static void *num_seq_op_start(struct seq_file *s_file, loff_t *pos)
@@ -70,15 +70,13 @@ static int num_seq_proc_open(struct inode *inode, struct file *filp)
 
 static int __init num_seq_init(void)
 {
-	num_dev = kmalloc(sizeof(struct num_seq_dev), GFP_KERNEL);
 	num_seq_create_proc();
 	return 0;
 }
 
 static void __exit num_seq_exit(void)
 {
-	proc_remove(num_dev->pdir);
-	kfree(num_dev);
+	proc_remove(num_dev.pdir);
 }
 
 module_init(num_seq_init);
