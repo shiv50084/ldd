@@ -2,7 +2,7 @@ MODULE_NAME := simple
 
 ifneq ($(KERNELRELEASE),)
 
-obj-m += $(MODULE_NAME).o
+obj-m += $(addsuffix .o,$(MODULE_NAME))
 ccflags-y := -std=gnu11 -DDEBUG
 
 else
