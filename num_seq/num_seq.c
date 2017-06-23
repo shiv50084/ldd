@@ -37,6 +37,8 @@ static const struct seq_operations num_seq_iter = {
 
 static struct num_seq_dev num_dev;
 
+#define COUNTER_BORDER 16
+
 static void num_seq_create_proc(void)
 {
 	num_dev.pdir = proc_create("num_seq", 0, NULL, &num_seq_proc_ops);
@@ -44,7 +46,11 @@ static void num_seq_create_proc(void)
 
 static void *num_seq_op_start(struct seq_file *s_file, loff_t *pos)
 {
-	return NULL;
+	if (*pos == COUNTER_BORDER) {
+		return NULL;
+	}
+
+	return pos;
 }
 
 static void num_seq_op_stop(struct seq_file *s_file, void *v)
@@ -53,11 +59,18 @@ static void num_seq_op_stop(struct seq_file *s_file, void *v)
 
 static void *num_seq_op_next(struct seq_file *s_file, void *v, loff_t *pos)
 {
-	return NULL;
+	if (++*pos == COUNTER_BORDER) {
+		return NULL;
+	}
+
+	return pos;
 }
 
 static int num_seq_op_show(struct seq_file *s_file, void *v)
 {
+	const int *inc_count = v;
+	seq_printf(s_file, "counter: %d\n", *inc_count);
+
 	return 0;
 }
 
