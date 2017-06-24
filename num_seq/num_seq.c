@@ -69,6 +69,7 @@ static void *num_seq_op_next(struct seq_file *s_file, void *v, loff_t *pos)
 static int num_seq_op_show(struct seq_file *s_file, void *v)
 {
 	const int *inc_count = v;
+
 	seq_printf(s_file, "counter: %d\n", *inc_count);
 
 	return 0;
