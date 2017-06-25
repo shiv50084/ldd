@@ -82,7 +82,6 @@ static ssize_t simple_mod_read(struct file *filp, char __user *buf,
 
 	*off += count;
 	retval = count;
-
 out:
 	pr_debug("simple: read retval %d\n", retval);
 
@@ -170,7 +169,6 @@ static int __init simple_init(void)
 	pr_debug("simple: allocate major number %d\n", simple_major_no);
 
 	return 0;
-
 fail:
 	simple_mod_cleanup();
 
