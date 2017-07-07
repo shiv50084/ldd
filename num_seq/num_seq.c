@@ -85,6 +85,7 @@ static int num_seq_proc_open(struct inode *inode, struct file *filp)
 static int __init num_seq_init(void)
 {
 	num_seq_create_proc();
+
 	return 0;
 }
 
