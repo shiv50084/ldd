@@ -71,21 +71,18 @@ static int num_seq_op_show(struct seq_file *s_file, void *v)
 	const int *inc_count = v;
 
 	seq_printf(s_file, "counter: %d\n", *inc_count);
-
 	return 0;
 }
 
 static int num_seq_proc_open(struct inode *inode, struct file *filp)
 {
 	pr_debug("num_seq: open /proc file\n");
-
 	return seq_open(filp, &num_seq_iter);
 }
 
 static int __init num_seq_init(void)
 {
 	num_seq_create_proc();
-
 	return 0;
 }
 
