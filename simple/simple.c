@@ -84,7 +84,6 @@ static ssize_t simple_mod_read(struct file *filp, char __user *buf,
 	retval = count;
 out:
 	pr_debug("simple: read retval %d\n", retval);
-
 	return retval;
 }
 
@@ -117,7 +116,6 @@ static ssize_t simple_mod_write(struct file *filp, const char __user *buf,
 	}
 out:
 	pr_debug("simple: write retval %d\n", retval);
-
 	return retval;
 }
 
@@ -134,7 +132,6 @@ static void simple_mod_cleanup(void)
 	cdev_del(&s_dev->cdev);
 	kfree(s_dev);
 	unregister_chrdev_region(dev_no, simple_num_dev);
-
 }
 
 static int __init simple_init(void)
@@ -167,11 +164,9 @@ static int __init simple_init(void)
 
 	simple_major_no = MAJOR(dev_no);
 	pr_debug("simple: allocate major number %d\n", simple_major_no);
-
 	return 0;
 fail:
 	simple_mod_cleanup();
-
 	return res;
 }
 
