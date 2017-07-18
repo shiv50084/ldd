@@ -6,7 +6,7 @@
 #include <linux/module.h>
 #include <linux/seq_file.h>
 
-MODULE_AUTHOR("Vladimir Petrigo");
+MODULE_AUTHOR("Vladimir Petrigo <taenaru@gmail.com>");
 MODULE_DESCRIPTION("Print number sequence to /proc/num_seq");
 MODULE_LICENSE("Dual BSD/GPL");
 
