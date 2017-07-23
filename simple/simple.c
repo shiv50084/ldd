@@ -11,7 +11,7 @@
 #include <linux/types.h>
 #include <linux/uaccess.h>
 
-MODULE_AUTHOR("Vladimir Petrigo");
+MODULE_AUTHOR("Vladimir Petrigo <taenaru@gmail.com>");
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_DESCRIPTION("Simple char device driver");
 
