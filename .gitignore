@@ -3,7 +3,7 @@
 **/*.symvers
 **/*.order
 **/*.cmd
-**/.tmp_versions/
+**/.tmp_versions/*
 **/*.mod.c
 # Linux module
 **/*.ko
